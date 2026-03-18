@@ -7,7 +7,7 @@ public class PayrollSystem {
     public static void main(String[] args) {
         Scanner input = new Scanner(System.in);
         System.out.println("======================================");
-        System.out.println("   MOTORPH ENTERPRISE PAYROLL V2.0");
+        System.out.println("   MOTORPH ENTERPRISE PAYROLL V3.0");
         System.out.println("======================================");
         
         System.out.print("Enter Username: ");
@@ -15,18 +15,18 @@ public class PayrollSystem {
         System.out.print("Enter 5-digit Password: ");
         String pass = input.nextLine();
 
-        // 1. Secure Login System
+        // Feature: Secure 5-digit Password System
         if (pass.length() == 5 && (user.equals("admin") || user.equals("employee"))) {
             showMenu(user, input);
         } else {
-            System.out.println("[!] Access Denied. Use a 5-digit password.");
+            System.out.println("[!] Access Denied. Check your credentials.");
         }
     }
 
     public static void showMenu(String role, Scanner input) {
         while (true) {
             System.out.println("\n--- " + role.toUpperCase() + " DASHBOARD ---");
-            System.out.println("1. Process Payroll (Search & Calculate)");
+            System.out.println("1. Process Payroll (ID + Attendance)");
             System.out.println("2. Exit");
             System.out.print("Select: ");
             int choice = input.nextInt();
@@ -34,45 +34,62 @@ public class PayrollSystem {
             if (choice == 1) {
                 System.out.print("Enter Employee ID (10001-10100): ");
                 String id = input.next();
-                calculatePayroll(id);
+                processEmployee(id);
             } else break;
         }
     }
 
-    public static void calculatePayroll(String id) {
-        String file = "Employee_Data.csv"; 
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+    // Feature: Automated CSV Reading for Attendance_Logs.csv
+    public static double getHoursFromLogs(String id) {
+        double totalHours = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader("Attendance_Logs.csv"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] logs = line.split(",");
+                if (logs[0].equals(id)) {
+                    totalHours += 8.0; // Standard 8-hour shift per log entry
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("[!] Warning: Attendance_Logs.csv not found.");
+        }
+        return totalHours;
+    }
+
+    // Feature: Deduction Engine & Scalability
+    public static void processEmployee(String id) {
+        try (BufferedReader br = new BufferedReader(new FileReader("Employee_Data.csv"))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(",");
                 if (data[0].equals(id)) {
-                    double basicSalary = Double.parseDouble(data[4]);
+                    double monthlySalary = Double.parseDouble(data[4]);
+                    double hoursWorked = getHoursFromLogs(id);
                     
-                    // 2. Deduction Engine Logic
-                    double sss = basicSalary * 0.045; // 4.5% SSS
-                    double philhealth = basicSalary * 0.02; // 2% PhilHealth
-                    double pagibig = 100.0; // Fixed Pag-IBIG
-                    double tax = (basicSalary > 20000) ? (basicSalary * 0.15) : 0; // Simple Tax logic
+                    // Calculation Logic
+                    double hourlyRate = monthlySalary / 160; 
+                    double grossPay = hourlyRate * hoursWorked;
                     
-                    double totalDeductions = sss + philhealth + pagibig + tax;
-                    double netPay = basicSalary - totalDeductions;
-                    double biMonthly = netPay / 2; // 3. Cutoff Management (1-15, 16-31)
+                    // Deduction Engine (SSS, PhilHealth, Tax)
+                    double sss = grossPay * 0.045;
+                    double philhealth = grossPay * 0.02;
+                    double tax = (grossPay > 15000) ? (grossPay * 0.12) : 0;
+                    double netPay = grossPay - (sss + philhealth + tax);
 
-                    System.out.println("\n[PAYROLL SUMMARY FOR: " + data[2] + " " + data[1] + "]");
+                    System.out.println("\n[PAYROLL RESULT FOR ID: " + id + "]");
+                    System.out.println("Name: " + data[2] + " " + data[1]);
+                    System.out.println("Total Hours Worked: " + hoursWorked);
                     System.out.println("--------------------------------------");
-                    System.out.println("Monthly Basic: P" + basicSalary);
-                    System.out.println("SSS Contribution: P" + sss);
-                    System.out.println("PhilHealth: P" + philhealth);
-                    System.out.println("Tax: P" + tax);
-                    System.out.println("--------------------------------------");
-                    System.out.println("NET MONTHLY PAY: P" + netPay);
-                    System.out.println("BI-MONTHLY PAY (Cutoff): P" + biMonthly);
+                    System.out.println("Gross Pay: P" + String.format("%.2f", grossPay));
+                    System.out.println("Deductions (SSS/PhilH/Tax): P" + String.format("%.2f", (sss+philhealth+tax)));
+                    System.out.println("NET MONTHLY PAY: P" + String.format("%.2f", netPay));
+                    System.out.println("BI-MONTHLY CUTOFF (1-15): P" + String.format("%.2f", netPay / 2));
                     return;
                 }
             }
-            System.out.println("[!] ID Not Found.");
+            System.out.println("[!] Employee ID not found in database.");
         } catch (Exception e) {
-            System.out.println("[!] Error: Ensure Employee_Data.csv is in the root folder.");
+            System.out.println("[!] System Error: Check if CSV files are in the main folder.");
         }
     }
 }
