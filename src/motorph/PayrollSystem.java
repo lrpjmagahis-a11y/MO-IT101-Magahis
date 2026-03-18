@@ -30,13 +30,15 @@ public class PayrollSystem {
     }
 
     public static void loadEmployeeData() {
-        // Standard NetBeans looks in the project root (above src)
         try (BufferedReader br = new BufferedReader(new FileReader("EmployeeDetails.csv"))) {
             String line;
             br.readLine(); 
             while ((line = br.readLine()) != null) {
+                // Splits by comma, but handles commas inside addresses/quotes
                 String[] data = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-                employeeMap.put(data[0].trim(), data);
+                if (data.length >= 20) {
+                    employeeMap.put(data[0].trim(), data);
+                }
             }
             System.out.println("✅ Loaded " + employeeMap.size() + " employees.");
         } catch (Exception e) {
@@ -47,7 +49,6 @@ public class PayrollSystem {
     public static boolean authenticate(String id, String pin) {
         if (!employeeMap.containsKey(id)) return false;
         String[] emp = employeeMap.get(id);
-        // This checks if the PIN you typed matches the PIN in the CSV (Column 20)
         return emp[19].trim().equals(pin);
     }
 
@@ -62,11 +63,12 @@ public class PayrollSystem {
             String choice = sc.nextLine();
 
             if (choice.equals("1")) {
-                System.out.println("\n--- PROFILE ---");
+                System.out.println("\n--- 👤 PROFILE ---");
                 System.out.println("ID: " + emp[0]);
                 System.out.println("Name: " + emp[2] + " " + emp[1]);
-                System.out.println("Birthday: " + emp[3]);
                 System.out.println("Position: " + emp[11]);
+                System.out.println("Status: " + emp[10]);
+                System.out.println("Basic Salary: P " + emp[13]);
             } else if (choice.equals("2")) {
                 calculatePayslip(emp);
             } else if (choice.equals("3")) {
@@ -105,14 +107,35 @@ public class PayrollSystem {
                     totalHours += (dayHrs > 5) ? dayHrs - 1 : dayHrs;
                 }
             }
-        } catch (Exception e) { System.out.println("[!] Attendance Records not found."); }
 
-        double lateDeduction = (hourlyRate / 60) * totalLateMins;
-        double gross = (hourlyRate * totalHours) - lateDeduction;
+            // Calculation Logic
+            double lateDeduction = (hourlyRate / 60) * totalLateMins;
+            double grossSalary = (hourlyRate * totalHours) - lateDeduction;
+            
+            // Deductions (Approximate PH rates)
+            double sss = grossSalary * 0.045; 
+            double philhealth = grossSalary * 0.02;
+            double pagibig = 100.00; // Fixed flat rate
+            double tax = (grossSalary > 20000) ? (grossSalary - 20000) * 0.20 : 0;
+            
+            double totalDeductions = sss + philhealth + pagibig + tax;
+            double netPay = grossSalary - totalDeductions;
 
-        System.out.println("\n--- MARCH PAYSLIP ---");
-        System.out.println("Total Hours: " + String.format("%.2f", totalHours));
-        System.out.println("Total Late:  " + (int)totalLateMins + " mins");
-        System.out.println("GROSS PAY:   P " + String.format("%.2f", gross));
+            System.out.println("\n--- 💵 PAYSLIP FOR MONTH " + month + " ---");
+            System.out.println("Total Hours:     " + String.format("%.2f", totalHours));
+            System.out.println("Late Minutes:    " + (int)totalLateMins);
+            System.out.println("----------------------------------------------");
+            System.out.println("GROSS SALARY:    P " + String.format("%.2f", grossSalary));
+            System.out.println("SSS Deduction:  -P " + String.format("%.2f", sss));
+            System.out.println("PhilHealth:     -P " + String.format("%.2f", philhealth));
+            System.out.println("Pag-IBIG:       -P " + String.format("%.2f", pagibig));
+            System.out.println("Withholding Tax:-P " + String.format("%.2f", tax));
+            System.out.println("----------------------------------------------");
+            System.out.println("NET PAY:         P " + String.format("%.2f", netPay));
+            System.out.println("==============================================");
+
+        } catch (Exception e) { 
+            System.out.println("[!] Error: AttendanceRecords.csv not found."); 
+        }
     }
 }
