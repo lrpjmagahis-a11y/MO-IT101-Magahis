@@ -4,90 +4,65 @@ import java.io.*;
 import java.util.*;
 
 public class PayrollSystem {
-    // Scalability: HashMap handles thousands of employees instantly
     static Map<String, String[]> employeeMap = new HashMap<>();
     static String loggedInID = "";
-    static boolean isAdmin = false;
 
     public static void main(String[] args) {
         loadEmployeeData();
         
         Scanner sc = new Scanner(System.in);
         System.out.println("==============================================");
-        System.out.println("        MOTORPH PAYROLL SYSTEM v6.0          ");
+        System.out.println("        MOTORPH PAYROLL SYSTEM v10.0         ");
         System.out.println("==============================================\n");
 
-        System.out.print("👤 User ID: ");
+        System.out.print("👤 Employee ID: ");
         String id = sc.nextLine().trim();
         System.out.print("🔑 PIN: ");
         String pin = sc.nextLine().trim();
 
-        // Admin Access Feature
-        if (id.equalsIgnoreCase("admin") && pin.equals("admin123")) {
-            isAdmin = true;
-            System.out.println("\n🛠️ ADMIN ACCESS GRANTED.");
-            showAdminMenu();
-        } 
-        // Employee Login Feature
-        else if (authenticate(id, pin)) {
+        if (authenticate(id, pin)) {
             loggedInID = id;
-            System.out.println("\n✅ LOGIN SUCCESSFUL!");
             showDashboard();
         } else {
-            System.out.println("\n❌ ACCESS DENIED: Incorrect ID or PIN.");
+            System.out.println("\n❌ Access Denied: Incorrect ID or PIN.");
         }
     }
 
     public static void loadEmployeeData() {
-        // Look for CSV in project root
-        File file = new File("EmployeeDetails.csv");
-        if (!file.exists()) file = new File("..", "EmployeeDetails.csv");
+        String fileName = "EmployeeDetails.csv";
+        File file = new File(fileName);
+        
+        // NetBeans fix: check parent directory if not in root
+        if (!file.exists()) file = new File("..", fileName);
 
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             br.readLine(); // Skip Header
             while ((line = br.readLine()) != null) {
-                // Regex handles commas inside addresses correctly
+                if (line.trim().isEmpty()) continue;
+                // Regex handles commas inside quoted addresses
                 String[] data = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-                if (data.length >= 20) {
+                if (data.length >= 19) {
                     employeeMap.put(data[0].trim(), data);
                 }
             }
-            System.out.println("📊 System: " + employeeMap.size() + " employees loaded.");
+            System.out.println("✅ " + employeeMap.size() + " Employees Synced from GitHub Data.");
         } catch (Exception e) {
-            System.out.println("[!] ERROR: EmployeeDetails.csv not found.");
+            System.out.println("[!] ERROR: Cannot find " + fileName + ". Ensure it's in the project root!");
         }
     }
 
     public static boolean authenticate(String id, String pin) {
         if (!employeeMap.containsKey(id)) return false;
-        // Index 19 is exactly the PIN column in your CSV
-        return employeeMap.get(id)[19].trim().equals(pin);
-    }
-
-    public static void showAdminMenu() {
-        Scanner sc = new Scanner(System.in);
-        while (true) {
-            System.out.println("\n--- ADMIN PANEL ---");
-            System.out.println("[1] View Workforce Summary");
-            System.out.println("[2] Process Full Payroll (All Staff)");
-            System.out.println("[3] Logout");
-            System.out.print("Selection: ");
-            String choice = sc.nextLine();
-
-            if (choice.equals("1")) {
-                System.out.println("Total Employees: " + employeeMap.size());
-            } else if (choice.equals("2")) {
-                for (String[] emp : employeeMap.values()) {
-                    calculatePayroll(emp, true);
-                }
-            } else if (choice.equals("3")) break;
-        }
+        String[] emp = employeeMap.get(id);
+        // Column 20 (Index 19) is the PIN in your GitHub CSV
+        return emp[19].trim().equals(pin);
     }
 
     public static void showDashboard() {
         Scanner sc = new Scanner(System.in);
         String[] emp = employeeMap.get(loggedInID);
+        
         while (true) {
             System.out.println("\nWELCOME, " + emp[2].toUpperCase() + " " + emp[1].toUpperCase());
             System.out.println("[1] View Profile  [2] Calculate Payslip  [3] Logout");
@@ -95,67 +70,79 @@ public class PayrollSystem {
             String choice = sc.nextLine();
 
             if (choice.equals("1")) {
-                System.out.println("\n--- EMPLOYEE PROFILE ---");
+                System.out.println("\n--- PROFILE ---");
                 System.out.println("ID: " + emp[0]);
                 System.out.println("Position: " + emp[11]);
                 System.out.println("SSS: " + emp[6] + " | TIN: " + emp[8]);
             } else if (choice.equals("2")) {
-                calculatePayroll(emp, false);
+                calculatePayslip(emp);
             } else if (choice.equals("3")) break;
         }
     }
 
-    public static void calculatePayroll(String[] emp, boolean isBatch) {
+    public static void calculatePayslip(String[] emp) {
         Scanner sc = new Scanner(System.in);
-        String month = "03", cutoff = "1";
-
-        if (!isBatch) {
-            System.out.print("\nEnter Month (01-12): "); month = sc.nextLine();
-            System.out.print("Select Cutoff [1] 1-15  [2] 16-31: "); cutoff = sc.nextLine();
-        }
-
+        System.out.print("\nEnter Month (1-12): ");
+        int userMonth = Integer.parseInt(sc.nextLine().trim());
+        
+        System.out.print("Select Cutoff [1] 1-15  [2] 16-31: ");
+        String cutoff = sc.nextLine().trim();
+        
+        // Column 19 (Index 18) is the Hourly Rate
         double hourlyRate = Double.parseDouble(emp[18].trim());
         double totalHours = 0, totalLateMins = 0;
+        int count = 0;
 
         File attFile = new File("AttendanceRecords.csv");
         if (!attFile.exists()) attFile = new File("..", "AttendanceRecords.csv");
 
         try (BufferedReader br = new BufferedReader(new FileReader(attFile))) {
-            String line; br.readLine();
+            String line;
+            br.readLine(); // Skip header
             while ((line = br.readLine()) != null) {
                 String[] att = line.split(",");
-                if (att[0].trim().equals(emp[0]) && att[1].startsWith(month)) {
-                    // Bi-monthly Cutoff Logic
-                    int day = Integer.parseInt(att[1].split("/")[1]);
-                    if ((cutoff.equals("1") && day <= 15) || (cutoff.equals("2") && day > 15)) {
-                        String[] in = att[2].split(":"), out = att[3].split(":");
-                        double hIn = Double.parseDouble(in[0]), mIn = Double.parseDouble(in[1]);
-                        double hOut = Double.parseDouble(out[0]), mOut = Double.parseDouble(out[1]);
+                if (att[0].trim().equals(emp[0])) {
+                    String[] dateParts = att[1].trim().split("/");
+                    int csvMonth = Integer.parseInt(dateParts[0]);
+                    int csvDay = Integer.parseInt(dateParts[1]);
 
-                        if (hIn > 8 || (hIn == 8 && mIn > 0)) totalLateMins += ((hIn - 8) * 60) + mIn;
-                        double dayHrs = (hOut + mOut/60) - (hIn + mIn/60);
-                        totalHours += (dayHrs > 5) ? dayHrs - 1 : dayHrs;
+                    if (csvMonth == userMonth) {
+                        boolean inPeriod = (cutoff.equals("1") && csvDay <= 15) || (cutoff.equals("2") && csvDay > 15);
+                        if (inPeriod) {
+                            String[] inT = att[2].trim().split(":");
+                            String[] outT = att[3].trim().split(":");
+                            
+                            double hIn = Double.parseDouble(inT[0]), mIn = Double.parseDouble(inT[1]);
+                            double hOut = Double.parseDouble(outT[0]), mOut = Double.parseDouble(outT[1]);
+
+                            if (hIn > 8 || (hIn == 8 && mIn > 0)) totalLateMins += ((hIn - 8) * 60) + mIn;
+                            double dayHrs = (hOut + mOut/60) - (hIn + mIn/60);
+                            totalHours += (dayHrs > 5) ? dayHrs - 1 : dayHrs;
+                            count++;
+                        }
                     }
                 }
             }
-            
-            // Deduction Engine Logic
-            double gross = (hourlyRate * totalHours) - ((hourlyRate / 60) * totalLateMins);
-            double sss = gross * 0.045; 
-            double phil = gross * 0.02;
-            double pagibig = 100.00;
-            double tax = (gross > 12500) ? (gross - 12500) * 0.20 : 0;
-            double net = gross - (sss + phil + pagibig + tax);
 
-            if (isBatch) {
-                System.out.printf("Employee: %s | Net Pay: P%,.2f\n", emp[0], net);
-            } else {
-                System.out.println("\n--- PAYSLIP SUMMARY ---");
-                System.out.println("Hours Worked:  " + String.format("%.2f", totalHours));
-                System.out.println("Gross Salary:  P " + String.format("%,.2f", gross));
-                System.out.println("Total Deductions: P " + String.format("%,.2f", (sss+phil+pagibig+tax)));
-                System.out.println("NET PAY:       P " + String.format("%,.2f", net));
+            if (count == 0) {
+                System.out.println("⚠️ No attendance found for this period.");
+                return;
             }
-        } catch (Exception e) { System.out.println("[!] Attendance error."); }
+
+            double gross = (hourlyRate * totalHours);
+            double sss = gross * 0.045;
+            double net = gross - (sss + 100); // 100 for Pag-IBIG
+
+            System.out.println("\n==============================================");
+            System.out.println("           MOTORPH OFFICIAL PAYSLIP           ");
+            System.out.println("==============================================");
+            System.out.printf("Total Days:    %d\n", count);
+            System.out.printf("Gross Salary:  P %,.2f\n", gross);
+            System.out.printf("NET PAY:       P %,.2f\n", net);
+            System.out.println("==============================================\n");
+
+        } catch (Exception e) {
+            System.out.println("❌ ERROR: Attendance parsing failed. Check format.");
+        }
     }
 }
