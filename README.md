@@ -15,11 +15,11 @@ A Java-based automatic payroll system that manages employee information, attenda
 ---
 
 ## 🛠️ Technical Stack
-* **Programming Language:** Java (JDK 11 or higher)
-* **Data Storage:** Flat-file Database (CSV - Comma Separated Values)
-* **Development Environment:** Apache NetBeans IDE
-* **Version Control:** Git & GitHub (Remote Repository Management)
-* **File I/O:** Java BufferedReader & FileReader for automated data streaming
+* **Programming Language:** Java (JDK 11+)
+* **Data Management:** Flat-file Database (CSV - Comma Separated Values)
+* **IDE:** Apache NetBeans 
+* **Version Control:** Git & GitHub
+* **Algorithms:** Conditional logic for tax brackets and loop-based file parsing for scalability.
 
 ---
 
@@ -42,8 +42,8 @@ The program determines the total hours worked by each employee within a selected
 
 ## 📂 Program Files
 - `src/motorph/PayrollSystem.java` – Main program logic and entry point.
-- `Employee_Data.csv` – Master list containing IDs, names, and hourly rates (Root Directory).
-- `Attendance_Logs.csv` – Contains randomized attendance logs with varied time-in/out (Root Directory).
+- `Employee_Data.csv` – Master list containing IDs, names, and hourly rates.
+- `Attendance_Logs.csv` – Contains randomized attendance logs used for calculations.
 
 ---
 
@@ -60,11 +60,11 @@ The project development tasks and payroll logic mapping can be found in the offi
 Clone the repository and open the project using **NetBeans IDE**.
 
 ### 2. Verify Project Files
-Ensure `Attendance_Logs.csv` and `Employee_Data.csv` are located in the **Project Root Folder** (same level as the `src` folder) for the system to detect the database.
+Ensure `Attendance_Logs.csv` and `Employee_Data.csv` are in the project root folder.
 
 ### 3. Run the Program
 1. Open the project in **NetBeans**.
-2. Right-click `PayrollSystem.java` and select **Run File**.
+2. Run `PayrollSystem.java`.
 
 ### 4. Login Credentials
 - **Employee Account:** Username: `employee` | Password: `12345`
