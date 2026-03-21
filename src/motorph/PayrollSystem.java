@@ -8,10 +8,10 @@ public class PayrollSystem {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
 
-        // 1. Initial Login
         System.out.println("=====================================");
         System.out.println("      MOTORPH PAYROLL SYSTEM        ");
         System.out.println("=====================================");
+        
         System.out.print("Username: ");
         String username = sc.nextLine();
         System.out.print("Password: ");
@@ -19,17 +19,16 @@ public class PayrollSystem {
 
         if (!password.equals("12345") || (!username.equals("employee") && !username.equals("payroll_staff"))) {
             System.out.println("Incorrect username and/or password.");
-            return; // Terminate
+            return; 
         }
 
         if (username.equals("employee")) {
             handleEmployeeMode(sc);
-        } else {
+        } else if (username.equals("payroll_staff")) {
             handleStaffMode(sc);
         }
     }
 
-    // --- MODE: EMPLOYEE ---
     public static void handleEmployeeMode(Scanner sc) {
         while (true) {
             System.out.println("\n1. Enter your employee number");
@@ -41,23 +40,17 @@ public class PayrollSystem {
                 System.out.print("Employee #: ");
                 String empNum = sc.nextLine();
                 String[] details = findEmployee(empNum);
-                
                 if (details == null) {
                     System.out.println("Employee number does not exist.");
                 } else {
-                    System.out.println("\n--- EMPLOYEE DETAILS ---");
-                    System.out.println("Employee Number: " + details[0]);
-                    System.out.println("Employee Name: " + details[2] + " " + details[1]);
-                    System.out.println("Birthday: " + details[3]);
+                    System.out.println("\na. Employee Number: " + details[0]);
+                    System.out.println("b. Employee Name: " + details[2] + " " + details[1]);
+                    System.out.println("c. Birthday: " + details[3]);
                 }
-            } else if (choice.equals("2")) {
-                System.out.println("Terminating program...");
-                break;
-            }
+            } else if (choice.equals("2")) break;
         }
     }
 
-    // --- MODE: PAYROLL STAFF ---
     public static void handleStaffMode(Scanner sc) {
         while (true) {
             System.out.println("\n1. Process Payroll");
@@ -70,160 +63,128 @@ public class PayrollSystem {
                 System.out.println("2. All employees");
                 System.out.println("3. Exit the program");
                 System.out.print("Selection: ");
-                String subChoice = sc.nextLine();
+                String sub = sc.nextLine();
 
-                if (subChoice.equals("1")) {
+                if (sub.equals("1")) {
                     System.out.print("Enter the employee number: ");
                     String empNum = sc.nextLine();
                     if (findEmployee(empNum) == null) {
                         System.out.println("Employee number does not exist.");
                     } else {
-                        processPayrollForEmployee(empNum);
+                        processPayroll(empNum);
                     }
-                } else if (subChoice.equals("2")) {
+                } else if (sub.equals("2")) {
                     processAllEmployees();
-                } else if (subChoice.equals("3")) {
-                    break;
-                }
-            } else if (choice.equals("2")) {
-                System.out.println("Terminating program...");
-                break;
-            }
+                } else if (sub.equals("3")) break;
+            } else if (choice.equals("2")) break;
         }
     }
 
-    // --- HELPER: FIND EMPLOYEE DATA ---
     public static String[] findEmployee(String id) {
-        try (BufferedReader br = new BufferedReader(new FileReader("Employee Details.csv"))) {
+        File f = getFile("Employee Details.csv");
+        if (f == null) return null;
+        try (BufferedReader br = new BufferedReader(new FileReader(f))) {
             String line;
-            br.readLine(); // Skip header
+            br.readLine(); 
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
                 if (data[0].trim().equals(id)) return data;
             }
-        } catch (IOException e) {
-            System.out.println("Error reading Employee Details file.");
-        }
+        } catch (Exception e) { System.out.println("Error reading Employee Details."); }
         return null;
     }
 
-    // --- LOGIC: PROCESS INDIVIDUAL PAYROLL ---
-    public static void processPayrollForEmployee(String empNum) {
-        String[] emp = findEmployee(empNum);
-        if (emp == null) return;
-
-        double hourlyRate = Double.parseDouble(emp[18].trim());
-
-        System.out.println("\n=============================================");
-        System.out.println("Employee #: " + emp[0]);
-        System.out.println("Employee Name: " + emp[2] + " " + emp[1]);
-        System.out.println("Birthday: " + emp[3]);
-        System.out.println("=============================================");
-
-        // Months June (6) to December (12)
-        for (int month = 6; month <= 12; month++) {
-            String mStr = (month < 10) ? "0" + month : "" + month;
-
-            // Cutoff 1: 1st to 15th
-            double hours1 = getHoursWorked(empNum, month, 1, 15);
-            double gross1 = hours1 * hourlyRate;
-
-            // Cutoff 2: 16th to end of month
-            double hours2 = getHoursWorked(empNum, month, 16, 31);
-            double gross2 = hours2 * hourlyRate;
-
-            // Display Cutoff 1
-            System.out.println("Cutoff Date: " + getMonthName(month) + " 1 to " + getMonthName(month) + " 15");
-            System.out.println("Total Hours Worked: " + hours1);
-            System.out.println("Gross Salary: " + gross1);
-            System.out.println("Net Salary: " + gross1);
-            System.out.println("---------------------------------------------");
-
-            // Compute Deductions based on monthly total
-            double totalMonthlyGross = gross1 + gross2;
-            double philhealth = totalMonthlyGross * 0.03; // Placeholder 3%
-            double love = 100.0; // Pag-IBIG
-            double tax = totalMonthlyGross * 0.20; // Placeholder 20%
-            double totalDeductions = philhealth + love + tax;
-
-            // Display Cutoff 2
-            System.out.println("Cutoff Date: " + getMonthName(month) + " 16 to " + getMonthName(month) + " End");
-            System.out.println("Total Hours Worked: " + hours2);
-            System.out.println("Gross Salary: " + gross2);
-            System.out.println("Each Deduction:");
-            System.out.println("  PhilHealth: " + philhealth);
-            System.out.println("  LOVE: " + love);
-            System.out.println("  Tax: " + tax);
-            System.out.println("Total Deductions: " + totalDeductions);
-            System.out.println("Net Salary: " + (gross2 - totalDeductions));
-            System.out.println("=============================================");
-        }
-    }
-
-    // --- LOGIC: PROCESS ALL EMPLOYEES ---
     public static void processAllEmployees() {
-        try (BufferedReader br = new BufferedReader(new FileReader("Employee Details.csv"))) {
-            String line;
-            br.readLine(); 
+        File f = getFile("Employee Details.csv");
+        try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+            String line; br.readLine();
             while ((line = br.readLine()) != null) {
                 String[] data = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
-                processPayrollForEmployee(data[0].trim());
+                processPayroll(data[0].trim());
             }
-        } catch (IOException e) {
-            System.out.println("Error processing payroll for all employees.");
+        } catch (Exception e) { System.out.println("Error processing all employees."); }
+    }
+
+    public static void processPayroll(String empNum) {
+        String[] emp = findEmployee(empNum);
+        double rate = Double.parseDouble(emp[18].trim());
+
+        System.out.println("\nEmployee #: " + emp[0]);
+        System.out.println("Employee Name: " + emp[2] + " " + emp[1]);
+        System.out.println("Birthday: " + emp[3]);
+
+        for (int m = 6; m <= 12; m++) {
+            double h1 = getMonthlyHours(empNum, m, 1, 15);
+            double h2 = getMonthlyHours(empNum, m, 16, 31);
+            double g1 = h1 * rate;
+            double g2 = h2 * rate;
+
+            System.out.println("Cutoff Date: " + getMonthName(m) + " 1 to " + getMonthName(m) + " 15");
+            System.out.println("Total Hours Worked: " + h1);
+            System.out.println("Gross Salary: " + g1);
+            System.out.println("Net Salary: " + g1);
+
+            double totalGross = g1 + g2;
+            double phil = totalGross * 0.03;
+            double love = 100.0;
+            double tax = (totalGross - (phil + love)) * 0.15;
+            double totalDeduct = phil + love + tax;
+
+            System.out.println("Cutoff Date: " + getMonthName(m) + " 16 to " + getMonthName(m) + " 30/31");
+            System.out.println("Total Hours Worked: " + h2);
+            System.out.println("Gross Salary: " + g2);
+            System.out.println("Each Deduction:");
+            System.out.println("PhilHealth: " + phil + "\nLOVE: " + love + "\nTax: " + tax);
+            System.out.println("Total Deductions: " + totalDeduct);
+            System.out.println("Net Salary: " + (g2 - totalDeduct));
+            System.out.println("---------------------------------------------");
         }
     }
 
-    // --- LOGIC: CALCULATE ATTENDANCE HOURS ---
-    public static double getHoursWorked(String id, int month, int startDay, int endDay) {
-        double totalHours = 0;
-        try (BufferedReader br = new BufferedReader(new FileReader("Attendance Record.csv"))) {
-            String line;
-            br.readLine(); 
+    public static double getMonthlyHours(String id, int m, int start, int end) {
+        double total = 0;
+        File f = getFile("Attendance Record.csv");
+        try (BufferedReader br = new BufferedReader(new FileReader(f))) {
+            String line; br.readLine();
             while ((line = br.readLine()) != null) {
-                String[] data = line.split(",");
-                String csvId = data[0].trim();
-                String date = data[3].trim(); // MM/DD/YYYY
-                
-                String[] dateParts = date.split("/");
-                int csvMonth = Integer.parseInt(dateParts[0]);
-                int csvDay = Integer.parseInt(dateParts[1]);
-
-                if (csvId.equals(id) && csvMonth == month && csvDay >= startDay && csvDay <= endDay) {
-                    String logIn = data[4].trim();
-                    String logOut = data[5].trim();
-                    totalHours += calculateDailyHours(logIn, logOut);
+                String[] d = line.split(",");
+                String[] dateParts = d[3].split("/");
+                int csvM = Integer.parseInt(dateParts[0]);
+                int csvD = Integer.parseInt(dateParts[1]);
+                if (d[0].equals(id) && csvM == m && csvD >= start && csvD <= end) {
+                    total += calcHours(d[4], d[5]);
                 }
             }
-        } catch (IOException e) { }
-        return totalHours;
+        } catch (Exception e) { }
+        return total;
     }
 
-    public static double calculateDailyHours(String logIn, String logOut) {
-        String[] inParts = logIn.split(":");
-        String[] outParts = logOut.split(":");
+    public static double calcHours(String in, String out) {
+        String[] t1 = in.split(":");
+        String[] t2 = out.split(":");
+        int hIn = Integer.parseInt(t1[0]), mIn = Integer.parseInt(t1[1]);
+        int hOut = Integer.parseInt(t2[0]), mOut = Integer.parseInt(t2[1]);
 
-        int hIn = Integer.parseInt(inParts[0]);
-        int mIn = Integer.parseInt(inParts[1]);
-        int hOut = Integer.parseInt(outParts[0]);
-        int mOut = Integer.parseInt(outParts[1]);
-
-        // Grace Period Logic: 8:05 treated as 8:00
+        // Rule 4c & 4d: 8:05 grace period
         if (hIn == 8 && mIn <= 5) mIn = 0;
-        // Constraint Logic: 8:00 AM to 5:00 PM
+        // Rule 4a: Max 8:00 AM to 5:00 PM
         if (hIn < 8) { hIn = 8; mIn = 0; }
         if (hOut >= 17) { hOut = 17; mOut = 0; }
 
-        double start = hIn + (mIn / 60.0);
-        double end = hOut + (mOut / 60.0);
+        double duration = (hOut + mOut/60.0) - (hIn + mIn/60.0);
+        return (duration > 5) ? duration - 1 : duration; // Less lunch
+    }
 
-        double duration = end - start;
-        // Subtract 1 hour for lunch if working a full shift
-        return (duration > 0) ? duration - 1.0 : 0;
+    public static File getFile(String name) {
+        File f = new File(name);
+        if (f.exists()) return f;
+        f = new File("..", name); // Check parent directory for NetBeans
+        if (f.exists()) return f;
+        return null;
     }
 
     public static String getMonthName(int m) {
-        String[] months = {"", "", "", "", "", "", "June", "July", "August", "September", "October", "November", "December"};
-        return months[m];
+        String[] names = {"","","","","","","June","July","August","September","October","November","December"};
+        return names[m];
     }
 }
