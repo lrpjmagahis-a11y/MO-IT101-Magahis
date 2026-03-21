@@ -1,71 +1,72 @@
 # MotorPH Automatic Payroll System v3.0
 **Course Project: IT101 - Computer Programming 1**
 
-A Java-based automatic payroll system that manages employee information, attendance records, and payroll calculations. This system demonstrates core programming skills, file handling, and payroll computation logic including SSS, PhilHealth, Pag-IBIG, and tax deductions.
+A procedural Java-based payroll system designed to manage employee information and attendance records for MotorPH. This system demonstrates file handling, procedural logic, and complex payroll computations strictly following corporate business rules.
 
 ---
 
 ## 📌 Project Contributor
 
 ### Princess Jade R. Magahis – Lead Developer & Data Architect
-* **System Logic:** Implemented the primary payroll computation tasks, such as calculating net pay, gross pay, deductions, and employee worked hours. 
-* **Data Management:** Processed and structured employee attendance information for 100+ records, including time-in and time-out data used to calculate work hours.
-* **UI/UX:** Created the program menu and handled user input validation to ensure seamless interaction with the payroll processing engine.
+* **System Logic:** Developed procedural algorithms for net pay, gross pay, and statutory deductions.
+* **Attendance Engine:** Implemented strict 8:00 AM–5:00 PM work-hour logic with a 5-minute grace period.
+* **Data Architecture:** Structured flat-file processing for employee records and 7 months of attendance data.
 
 ---
 
 ## 🛠️ Technical Stack
-* **Programming Language:** Java (JDK 11+)
-* **Data Management:** Flat-file Database (CSV - Comma Separated Values)
+* **Language:** Java (Procedural approach, No OOP)
+* **Data Storage:** Flat-file Database (CSV)
 * **IDE:** Apache NetBeans 
 * **Version Control:** Git & GitHub
-* **Algorithms:** Conditional logic for tax brackets and loop-based file parsing for scalability.
 
 ---
 
-## 💻 Program Details
-The **MotorPH Automatic Payroll System** is a Java application that automates payroll processing. The system reads employee information and attendance records from CSV files and calculates employee salaries based on their recorded working hours.
-
-The program determines the total hours worked by each employee within a selected payroll cutoff period (1–15 or 16–31 of the month). Using the employee’s hourly rate, it calculates the gross salary and automatically applies government deductions such as **SSS, PhilHealth, Pag-IBIG, and withholding tax** to produce the final net salary.
+## 💻 Business Rules & Logic
+The system follows specific calculation guidelines for accuracy:
+- **Work Hours:** Only hours between **08:00 and 17:00** are compensable.
+- **Grace Period:** Logins between 08:01 and 08:05 are treated as **08:00** (no late deduction).
+- **Lunch Break:** An automatic **1-hour deduction** is applied to daily totals.
+- **Statutory Deductions:** PhilHealth, Pag-IBIG (LOVE), and Withholding Tax are calculated based on the combined monthly gross salary and deducted during the **second cutoff** of each month.
 
 ---
 
 ## 🚀 Program Features
-- **Employee Login:** Secure login system with username and 5-digit password.
-- **Payroll Admin Access:** Dedicated login for processing and reviewing the entire workforce.
-- **Scalability:** Handles 100+ employees (expandable up to 1000).
-- **Automated CSV Reading:** Dynamically pulls data from `Employee_Data.csv` and `Attendance_Logs.csv`.
-- **Deduction Engine:** Accurate computation for SSS, PhilHealth, Pag-IBIG, and Tax.
-- **Cutoff Management:** Handles bi-monthly payroll periods (1–15, 16–31).
+- **Dual-Mode Access:** - **Employee Mode:** View personal profile and basic details.
+  - **Payroll Staff Mode:** Process detailed payroll for one or all employees.
+- **Timeframe:** Automated processing for the **June to December** period.
+- **Data Integrity:** Direct CSV parsing using regex to handle complex fields containing commas.
+- **Cutoff Management:** Automated bi-monthly splitting (1–15 and 16–end of month).
 
 ---
 
 ## 📂 Program Files
-- `src/motorph/PayrollSystem.java` – Main program logic and entry point.
-- `Employee_Data.csv` – Master list containing IDs, names, and hourly rates.
-- `Attendance_Logs.csv` – Contains randomized attendance logs used for calculations.
-
----
-
-## 📅 Project Documentation & Planning
-The project development tasks and payroll logic mapping can be found in the official documentation link below:
-
-[📊 View Project Plan & Data Sheets (Google Sheets)](https://docs.google.com/spreadsheets/d/13hAkgWlgDkVVQ-ZN1YtAlJpFTIJS0ifu/edit?usp=sharing&ouid=117006809110779909774&rtpof=true&sd=true)
+- `src/motorph/PayrollSystem.java` – The single-file source code containing all logic.
+- `Employee Details.csv` – Master list containing IDs, hourly rates, and personal info.
+- `Attendance Record.csv` – Raw logs used for hours-worked computations.
 
 ---
 
 ## ▶️ How to Run the Program
 
-### 1. Open the Project
-Clone the repository and open the project using **NetBeans IDE**.
+### 1. Setup Environment
+Clone the repository and ensure you have **JDK 11** or higher installed.
 
-### 2. Verify Project Files
-Ensure `Attendance_Logs.csv` and `Employee_Data.csv` are in the project root folder.
+### 2. File Placement
+**CRITICAL:** Ensure `Employee Details.csv` and `Attendance Record.csv` are located in the **Project Root** folder (the same folder containing the `src` folder).
 
-### 3. Run the Program
+### 3. Execution
 1. Open the project in **NetBeans**.
-2. Run `PayrollSystem.java`.
+2. Clean and Build the project.
+3. Run `PayrollSystem.java`.
 
 ### 4. Login Credentials
-- **Employee Account:** Username: `employee` | Password: `12345`
-- **Admin/Payroll Account:** Username: `admin` | Password: `12345`
+| User Role | Username | Password |
+| :--- | :--- | :--- |
+| **Employee** | `employee` | `12345` |
+| **Payroll Staff** | `payroll_staff` | `12345` |
+
+---
+
+## 📅 Project Documentation
+[📊 View Project Plan & Data Sheets (Google Sheets)](https://docs.google.com/spreadsheets/d/13hAkgWlgDkVVQ-ZN1YtAlJpFTIJS0ifu/edit?usp=sharing&ouid=117006809110779909774&rtpof=true&sd=true)
