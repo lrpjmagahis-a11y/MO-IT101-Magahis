@@ -1,16 +1,21 @@
-# Compiled class file
+# --- Java Compilation ---
 *.class
 
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
+# --- IDE Folders (NetBeans / IntelliJ / Eclipse) ---
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
 .mtj.tmp/
+.classpath
+.project
+.settings/
+.idea/
+*.iml
+out/
 
-# Package Files #
+# --- Package Files ---
 *.jar
 *.war
 *.nar
@@ -19,6 +24,19 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# --- Log Files ---
+*.log
 hs_err_pid*
 replay_pid*
+
+# --- BlueJ ---
+*.ctxt
+
+# --- CSV DATA FILES ---
+# Ensure these are NOT ignored so your program can actually run after cloning
+!Employee Details.csv
+!Attendance Record.csv
+
+# --- System Files ---
+.DS_Store
+Thumbs.db
